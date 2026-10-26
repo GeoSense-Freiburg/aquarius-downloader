@@ -12,3 +12,6 @@ catalog*.json
 manifest.json
 selected_series.json
 *.ipynb
+desktop.ini
+Thumbs.db
+.DS_Store
