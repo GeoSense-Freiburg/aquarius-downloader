@@ -66,6 +66,31 @@ class DownloaderTests(unittest.TestCase):
             with self.assertRaises(aq.AquariusError):
                 aq.download(FakeClient(), [SERIES], aq.parse_time('2026-01-01'), aq.parse_time('2026-02-01'), out)
 
+    def test_offset_timestamps_at_boundary(self):
+        class OffsetClient:
+            def get(self, route, **params):
+                return {'Points': [
+                    {'Timestamp': '2026-01-01T00:59:00+01:00', 'NumericValue1': -1},
+                    {'Timestamp': '2026-01-01T01:00:00+01:00', 'NumericValue1': 2},
+                    {'Timestamp': '2026-01-02T00:59:00+01:00', 'NumericValue1': 3},
+                    {'Timestamp': '2026-01-02T01:00:00+01:00', 'NumericValue1': 999}]}
+        with tempfile.TemporaryDirectory() as tmp:
+            r = aq.export_series(OffsetClient(), SERIES, aq.parse_time('2026-01-01'), aq.parse_time('2026-01-02'), Path(tmp))
+            self.assertEqual(r['numeric_rows'], 2)
+            self.assertEqual(r['minimum'], 2)
+            self.assertEqual(r['maximum'], 3)
+            self.assertEqual(r['last_numeric_utc'], '2026-01-01T23:59:00Z')
+
+    def test_empty_series(self):
+        class EmptyClient:
+            def get(self, route, **params):
+                return {'Points': []}
+        with tempfile.TemporaryDirectory() as tmp:
+            r = aq.export_series(EmptyClient(), SERIES, aq.parse_time('2026-01-01'), aq.parse_time('2026-02-01'), Path(tmp))
+            self.assertEqual(r['numeric_rows'], 0)
+            self.assertIsNone(r['minimum'])
+            self.assertIsNone(r['first_numeric_utc'])
+
     def test_complete_and_invalid_range(self):
         with tempfile.TemporaryDirectory() as tmp:
             out = Path(tmp) / 'download'

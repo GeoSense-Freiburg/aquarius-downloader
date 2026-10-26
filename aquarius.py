@@ -1,6 +1,5 @@
 """Browse AQUARIUS Publish v2 and export selected time series. Python 3.10+."""
 import argparse
-import calendar
 import collections
 import csv
 from datetime import datetime, timezone
