@@ -4,6 +4,7 @@ import collections
 import csv
 from datetime import datetime, timezone
 import getpass
+from http.client import HTTPException
 import json
 import math
 import os
@@ -47,7 +48,7 @@ class Client:
                     time.sleep(2 ** attempt)
                     continue
                 raise AquariusError(f'AQUARIUS returned HTTP {e.code}; check access, credentials and selected series.') from None
-            except (URLError, TimeoutError):
+            except (URLError, TimeoutError, ConnectionError, HTTPException):
                 if method == 'GET' and attempt < 2:
                     time.sleep(2 ** attempt)
                     continue

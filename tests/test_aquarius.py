@@ -1,8 +1,11 @@
 import csv
 import json
+import io
+from http.client import RemoteDisconnected
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import patch
 import aquarius as aq
 
 
@@ -29,6 +32,13 @@ class FakeClient:
 
 
 class DownloaderTests(unittest.TestCase):
+    def test_read_retries_closed_connection(self):
+        with patch('aquarius.urlopen', return_value=io.BytesIO(b'test-session')):
+            client = aq.Client('https://example.invalid', 'test', 'test')
+        with patch('aquarius.urlopen', side_effect=[RemoteDisconnected(), io.BytesIO(b'{"Points": []}')]) as opened, patch('aquarius.time.sleep'):
+            self.assertEqual(client.get('/GetTimeSeriesData'), {'Points': []})
+            self.assertEqual(opened.call_count, 2)
+
     def test_dates_and_offsets(self):
         self.assertEqual(aq.iso(aq.parse_time('2026-01-01')), '2026-01-01T00:00:00Z')
         self.assertEqual(aq.iso(aq.parse_time('2026-08-01T00:00:00+02:00')), '2026-07-31T22:00:00Z')
