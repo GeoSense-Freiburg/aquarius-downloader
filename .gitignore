@@ -1,0 +1,14 @@
+__pycache__/
+*.py[cod]
+.venv/
+.env
+.env.*
+!.env.example
+downloads/
+data/
+catalog*.json
+*.csv
+*.partial
+manifest.json
+selected_series.json
+*.ipynb
